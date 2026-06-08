@@ -11,6 +11,8 @@ jobs:
   build:
     needs: [checks]
     runs-on: ubuntu-latest
+    outputs:
+      image_sha: ${{ steps.build-push.outputs.image_sha}}
     steps:
       - uses: actions/checkout@v4
 
@@ -18,6 +20,7 @@ jobs:
         run: docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
 
       - name: Build and Push образа
+        id: build-push
         env:
           IMAGE_SHA: ${{ secrets.DOCKER_USER }}/backend:sha-${{ github.sha }}
           IMAGE_LATEST: ${{ secrets.DOCKER_USER }}/backend:latest
@@ -50,4 +53,5 @@ jobs:
 
   notify:
     needs: [checks, deploy, build]
+    if: always()
     uses:  ./.github/workflows/notify.yaml

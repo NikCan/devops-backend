@@ -2,6 +2,16 @@ name: Notify
 
 on:
   workflow_call:
+    inputs:
+      checks_result:
+        type: string
+        required: true
+      build_result:
+        type: string
+        required: true
+      deploy_result:
+        type: string
+        required: true
 
 jobs:
   notify-tg:
@@ -11,12 +21,14 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CHECKS: ${{ inputs.checks_result }}
+          BUILD: ${{ inputs.build_result }}
+          DEPLOY: ${{ inputs.deploy_result }}
         run: |
-          CHECKS="${{ needs.checks.result }}"
-          DEPLOY="${{ needs.deploy.result }}"
-
           if [ "$CHECKS" != "success" ]; then
             TEXT="❌ Тесты упали%0A${{ github.repository }} @ ${{ github.ref_name }}%0AСмотри: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          elif [ "$BUILD" != "success" ]; then
+            TEXT="❌ Сборка упала%0A${{ github.repository }} @ ${{ github.ref_name }}%0AСмотри: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           elif [ "$DEPLOY" != "success" ]; then
             TEXT="❌ Деплой упал%0A${{ github.repository }} @ ${{ github.ref_name }}%0AСмотри: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           else

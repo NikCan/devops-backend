@@ -39,5 +39,6 @@ jobs:
   notify:
     name: Notify
     needs: [checks, deploy, build]
+    if: always()
     uses: ./.github/workflows/notify.yml
     secrets: inherit

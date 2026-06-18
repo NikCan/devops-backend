@@ -6,7 +6,6 @@ on:
 jobs:
   notify-tg:
     runs-on: ubuntu-latest
-    if: always()
     steps:
       - name: Notify Telegram
         env:

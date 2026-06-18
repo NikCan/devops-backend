@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 jobs:
-  build:
+  build-image:
     runs-on: ubuntu-latest
     outputs:
       image_sha: ${{ steps.build-push.outputs.image_sha }} # передаём в deploy

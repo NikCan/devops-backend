@@ -6,14 +6,17 @@ on:
 
 jobs:
   checks:
+    name: Checks
     uses: ./.github/workflows/checks.yml
 
   build:
+    name: Build
     needs: [checks]
     uses: ./.github/workflows/build.yml
     secrets: inherit
 
   deploy:
+    name: Deploy
     needs: [checks, build]
     runs-on: ubuntu-latest
 
@@ -23,7 +26,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/lesson
 
@@ -34,6 +37,7 @@ jobs:
             docker compose up -d --no-deps backend
 
   notify:
+    name: Notify
     needs: [checks, deploy, build]
     uses: ./.github/workflows/notify.yml
     secrets: inherit

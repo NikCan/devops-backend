@@ -1,70 +1,56 @@
-name: Deploy
+name: Deploy Template
 
 on:
-  push:
-    branches: [main]
+  workflow_call:
+    inputs:
+      image_name:
+        description: 'Имя Docker-образа (без юзернейма, например: devops-backend)'
+        required: true
+        type: string
+      deploy_dir:
+        description: 'Путь к директории проекта на сервере'
+        required: true
+        type: string
+      compose_service:
+        description: 'Имя сервиса в docker-compose.yml'
+        required: true
+        type: string
+      env_image_var:
+        description: 'Переменная окружения для замены в .env файле'
+        required: true
+        type: string
+    secrets:
+      DOCKER_USER:
+        required: true
+      SSH_HOST:
+        required: true
+      SSH_USER:
+        required: true
+      SSH_PRIVATE_KEY:
+        required: true
 
 jobs:
-  checks:
-    name: Checks
-    uses: ./.github/workflows/checks.yml
-
-  build:
-    name: Build
-    needs: [checks]
+  deploy_to_server:
     runs-on: ubuntu-latest
-    outputs:
-      image_tag: ${{ steps.build-push.outputs.image_tag }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASS }}
-
-      - name: Build и push образа с двумя тегами
-        id: build-push
-        env:
-          IMAGE_TAG: sha-${{ github.sha }}
-          IMAGE_SHA: ${{ secrets.DOCKER_USER }}/devops-backend:sha-${{ github.sha }}
-          IMAGE_LATEST: ${{ secrets.DOCKER_USER }}/devops-backend:latest
-        run: |
-          docker build -t $IMAGE_SHA -t $IMAGE_LATEST .
-          docker push $IMAGE_SHA
-          docker push $IMAGE_LATEST
-          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-  deploy:
-    name: Deploy
-    needs: [checks, build]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Deploy to server
+      - name: Execute deployment commands via SSH
         uses: appleboy/ssh-action@v1
         env:
-          BACKEND_IMAGE: ${{ secrets.DOCKER_USER }}/devops-backend:${{ needs.build.outputs.image_tag }}
+          # Формируем целевой образ, опираясь на параметры и глобальный хэш коммита
+          TARGET_IMAGE: ${{ secrets.DOCKER_USER }}/${{ inputs.image_name }}:sha-${{ github.sha }}
+          ENV_VAR_NAME: ${{ inputs.env_image_var }}
+          DEPLOY_DIR: ${{ inputs.deploy_dir }}
+          COMPOSE_SERVICE: ${{ inputs.compose_service }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: BACKEND_IMAGE
+          envs: TARGET_IMAGE, ENV_VAR_NAME, DEPLOY_DIR, COMPOSE_SERVICE
           script: |
-            cd /var/www/lesson
-
-            sed -i "s|BACKEND_IMAGE=.*|BACKEND_IMAGE=${BACKEND_IMAGE}|" .env
-
-            docker compose up -d --no-deps backend
-
-  notify:
-    name: Notify
-    needs: [checks, build, deploy]
-    if: always()
-    uses: ./.github/workflows/notify.yml
-    with:
-      checks_result: ${{ needs.checks.result }}
-      build_result: ${{ needs.build.result }}
-      deploy_result: ${{ needs.deploy.result }}
-    secrets: inherit
+            cd $DEPLOY_DIR
+            
+            # Обновляем тег образа в .env файле
+            sed -i "s|^${ENV_VAR_NAME}=.*|${ENV_VAR_NAME}=${TARGET_IMAGE}|" .env
+            
+            # Перезапускаем только обновленный сервис
+            docker compose up -d --no-deps $COMPOSE_SERVICE

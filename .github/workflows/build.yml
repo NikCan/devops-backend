@@ -2,6 +2,9 @@ name: Build
 
 on:
   workflow_call:
+    outputs:
+      image_sha:
+        value: ${{ jobs.build-image.outputs.image_sha }}
 
 jobs:
   build-image:

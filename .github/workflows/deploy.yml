@@ -31,7 +31,7 @@ jobs:
             cd /var/www/lesson
 
             # Берём имя образа из output предыдущего job'а — не дублируем
-            sed -i "s|DOCKER_IMAGE=.*|DOCKER_IMAGE=${{ needs.build.outputs.image_sha }}|" .env
+            sed -i "s|BACKEND_IMAGE=.*|BACKEND_IMAGE=${{ needs.build.outputs.image_sha }}|" .env
 
             # Перезапускаем только backend, не трогая frontend и db
             docker compose up -d --no-deps backend

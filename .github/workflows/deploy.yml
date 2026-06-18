@@ -14,7 +14,7 @@ jobs:
     needs: [checks]
     runs-on: ubuntu-latest
     outputs:
-      image_sha: ${{ steps.build-push.outputs.image_sha }}
+      image_tag: ${{ steps.build-push.outputs.image_tag }}
     steps:
       - uses: actions/checkout@v4
 
@@ -27,13 +27,14 @@ jobs:
       - name: Build и push образа с двумя тегами
         id: build-push
         env:
+          IMAGE_TAG: sha-${{ github.sha }}
           IMAGE_SHA: ${{ secrets.DOCKER_USER }}/devops-backend:sha-${{ github.sha }}
           IMAGE_LATEST: ${{ secrets.DOCKER_USER }}/devops-backend:latest
         run: |
           docker build -t $IMAGE_SHA -t $IMAGE_LATEST .
           docker push $IMAGE_SHA
           docker push $IMAGE_LATEST
-          echo "image_sha=$IMAGE_SHA" >> $GITHUB_OUTPUT
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   deploy:
     name: Deploy
@@ -44,7 +45,7 @@ jobs:
       - name: Deploy to server
         uses: appleboy/ssh-action@v1
         env:
-          BACKEND_IMAGE: ${{ needs.build.outputs.image_sha }}
+          BACKEND_IMAGE: ${{ secrets.DOCKER_USER }}/devops-backend:${{ needs.build.outputs.image_tag }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}

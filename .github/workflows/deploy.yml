@@ -9,6 +9,7 @@ jobs:
     uses: ./.github/workflows/checks.yml
 
   build:
+    needs: [checks]
     uses: ./.github/workflows/build.yml
 
   deploy:
@@ -32,4 +33,5 @@ jobs:
             docker compose up -d --no-deps backend
 
   notify:
+    needs: [checks, deploy, build]
     uses: ./.github/workflows/notify.yml

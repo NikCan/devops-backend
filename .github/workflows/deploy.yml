@@ -11,6 +11,7 @@ jobs:
   build:
     needs: [checks]
     uses: ./.github/workflows/build.yml
+    secrets: inherit
 
   deploy:
     needs: [checks, build]
@@ -35,3 +36,4 @@ jobs:
   notify:
     needs: [checks, deploy, build]
     uses: ./.github/workflows/notify.yml
+    secrets: inherit

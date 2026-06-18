@@ -1,12 +1,20 @@
-name: CI Checks
+name: Code Checks Template
 
 on:
+  # Вызывается из главного пайплайна (push в main)
   workflow_call:
+  # Запускается автоматически при создании Pull Request в main
   pull_request:
     branches: [main]
 
 jobs:
-  checks-pr:
+  run_checks:
+    name: Node.js ${{ matrix.node-version }}
+    runs-on: ${{ matrix.os }}
+    
+    # Безопасное чтение флага: если experimental не задан, возвращаем false
+    continue-on-error: ${{ matrix.experimental || false }}
+    
     strategy:
       fail-fast: false
       matrix:
@@ -16,15 +24,12 @@ jobs:
           - node-version: 26
             experimental: true
 
-    continue-on-error: ${{ matrix.experimental == true }}
-    runs-on: ${{ matrix.os }}
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: "yarn"
@@ -32,11 +37,11 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Lint
+      - name: Run linter
         run: yarn lint
 
-      - name: Test
+      - name: Run tests
         run: yarn test
 
-      - name: Build frontend
+      - name: Build project
         run: yarn build

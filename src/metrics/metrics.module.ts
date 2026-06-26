@@ -7,6 +7,12 @@ import { collectDefaultMetrics } from 'prom-client';
 })
 export class MetricsModule {
   constructor() {
-    collectDefaultMetrics(); // CPU, RAM, event loop, GC процесса Node.js
+    const globalRef = global as unknown as {
+      defaultMetricsRegistered?: boolean;
+    };
+    if (!globalRef.defaultMetricsRegistered) {
+      collectDefaultMetrics(); // CPU, RAM, event loop, GC процесса Node.js
+      globalRef.defaultMetricsRegistered = true;
+    }
   }
 }

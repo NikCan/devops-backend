@@ -25,7 +25,9 @@ export class MetricsMiddleware implements NestMiddleware {
     const end = httpRequestDuration.startTimer();
 
     res.on('finish', () => {
-      const route = (req.route as ExpressRoute | undefined)?.path ?? req.path;
+      const route =
+        (req.route as ExpressRoute | undefined)?.path ??
+        (res.statusCode === 404 ? '404' : 'unmatched');
       end({
         method: req.method,
         route,

@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { MetricsModule } from './metrics/metrics.module';
 import { ConfigModule } from '@nestjs/config';
 import { MetricsMiddleware } from './metrics/metrics.middleware';
+import { Todo } from './todo.entity';
 
 @Module({
   imports: [
@@ -16,17 +17,15 @@ import { MetricsMiddleware } from './metrics/metrics.middleware';
       type: 'postgres',
       url: process.env.DATABASE_URL,
       autoLoadEntities: true,
-      synchronize: false,
+      synchronize: true, // Включаем автосоздание таблиц для демо
     }),
+    TypeOrmModule.forFeature([Todo]),
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(MetricsMiddleware)
-      .exclude('metrics') // не измеряем сам /metrics эндпоинт
-      .forRoutes('*');
+    consumer.apply(MetricsMiddleware).exclude('metrics').forRoutes('*');
   }
 }

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-lesson
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: backend-lesson
+  template:
+    metadata:
+      labels:
+        app: backend-lesson
+    spec:
+      imagePullSecrets:
+        - name: dockerhub-cred
+      containers:
+        - name: backend-lesson
+          image: ${BACKEND_IMAGE}
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: lesson-secret
+            - configMapRef:
+                name: lesson-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-lesson-service
+spec:
+  selector:
+    app: backend-lesson
+  ports:
+    - port: 3000
+      targetPort: 3000
+  type: ClusterIP

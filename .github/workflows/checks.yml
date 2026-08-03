@@ -6,7 +6,7 @@ on:
     # Запускается автоматически при создании Pull Request в main
     # pull_request:
     # branches: [main]
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   run_checks:

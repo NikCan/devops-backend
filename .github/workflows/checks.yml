@@ -3,18 +3,19 @@ name: Code Checks Template
 on:
   # Вызывается из главного пайплайна (push в main)
   workflow_call:
-  # Запускается автоматически при создании Pull Request в main
-  pull_request:
-    branches: [main]
+    # Запускается автоматически при создании Pull Request в main
+    # pull_request:
+    # branches: [main]
+    workflow_dispatch:
 
 jobs:
   run_checks:
     name: Node.js ${{ matrix.node-version }}
     runs-on: ${{ matrix.os }}
-    
+
     # Безопасное чтение флага: если experimental не задан, возвращаем false
     continue-on-error: ${{ matrix.experimental || false }}
-    
+
     strategy:
       fail-fast: false
       matrix:

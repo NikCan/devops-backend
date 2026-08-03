@@ -1,9 +1,8 @@
-name: Backend CI/CD Pipeline
+name: Deploy k8s
 
 on:
-  # push:
-  #   branches: [main]
-  workflow_dispatch:
+  push:
+    branches: [develop]
 
 jobs:
   checks:
@@ -21,13 +20,19 @@ jobs:
   deploy:
     name: Deploy to Production
     needs: [build]
-    uses: ./.github/workflows/deploy.yml
-    with:
-      image_name: "devops-backend"
-      deploy_dir: "/var/www/lesson"
-      compose_service: "backend"
-      env_image_var: "BACKEND_IMAGE"
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+
+      - name: Deploy to k3s
+        env:
+          TARGET_IMAGE: ${{ secrets.DOCKER_USER }}/devops-backend:sha-${{ github.sha }}
+        run: |
+          kubectl set image deployment/backend-lesson backend-lesson=$TARGET_IMAGE
+          kubectl rollout status deployment/backend-lesson --timeout=120s
 
   notify:
     name: Send Notification

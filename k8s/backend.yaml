@@ -17,6 +17,13 @@ spec:
       containers:
         - name: backend-lesson
           image: ${BACKEND_IMAGE}
+          resources:
+            requests:
+              cpu: "60m"
+              memory: "100Mi"
+            limits:
+              cpu: "80m"
+              memory: "120Mi"
           ports:
             - containerPort: 3000
           envFrom:
@@ -29,10 +36,54 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend-lesson-service
+  labels:
+    app: backend-lesson-service
 spec:
   selector:
     app: backend-lesson
   ports:
-    - port: 3000
+    - name: http
+      port: 3000
       targetPort: 3000
   type: ClusterIP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: backend-monitor
+  namespace: default
+  labels:
+    release: kube-prometheus-stack # ← должен совпадать с именем release Helm
+spec:
+  selector:
+    matchLabels:
+      app: backend-lesson-service
+  endpoints:
+    - port: http # имя порта из Service
+      path: /metrics
+      interval: 15s
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-lesson-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend-lesson
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70 # target: 70% от CPU request
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80 # target: 80% от memory request

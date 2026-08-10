@@ -36,7 +36,7 @@ jobs:
         run: |
           envsubst < k8s/backend.yaml | kubectl apply -f -
           kubectl annotate deployment/backend-lesson kubernetes.io/change-cause="sha-${{ github.sha }}" --overwrite
-          kubectl rollout status deployment/backend-lesson --timeout=120s
+          kubectl rollout status deployment/backend-lesson --timeout=300s
 
   notify:
     name: Send Notification

@@ -53,10 +53,17 @@ export class AppController {
   @Get('ready')
   async getReady() {
     const uptime = Date.now() - appStartTime;
-    // Аналогично для ready пробы
+
+    // 1. Аналогично для ready пробы при старте
     if (uptime < 45000) {
       await new Promise((resolve) => setTimeout(resolve, 10000));
     }
+    // 2. Симулируем временную "потерю готовности" с 60 по 100 секунду (40 секунд)
+    // В это время k8s пометит под как NotReady и перестанет слать на него трафик
+    else if (uptime >= 60000 && uptime < 100000) {
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+    }
+
     return { status: 'ready' };
   }
 }

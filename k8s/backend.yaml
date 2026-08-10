@@ -32,6 +32,26 @@ spec:
                 name: lesson-secret
             - configMapRef:
                 name: lesson-config
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            failureThreshold: 12 # 12 × 5 сек = 1 минута на старт
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 0
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3000
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service
@@ -89,3 +109,21 @@ spec:
         target:
           type: Utilization
           averageUtilization: 80 # target: 80% от memory request
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+      selectPolicy: Max
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 4
+          periodSeconds: 15
+      selectPolicy: Max

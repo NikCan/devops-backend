@@ -37,7 +37,8 @@ jobs:
         env:
           BACKEND_IMAGE: ${{ secrets.DOCKER_USER }}/devops-backend:sha-${{ github.sha }}
         run: |
-          helm upgrade backend-lesson ./helm/backend-lesson \
+          helm upgrade --install backend-lesson ./helm/backend-lesson \
+          --namespace lesson \
           --reuse-values \
           --set image="$BACKEND_IMAGE" \
           --wait \

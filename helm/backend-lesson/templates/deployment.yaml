@@ -34,6 +34,7 @@ spec:
               path: /ready
               port: {{ .Values.service.port }}
             periodSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 3
           resources:
             requests:

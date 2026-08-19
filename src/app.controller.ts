@@ -6,10 +6,13 @@ import {
   Delete,
   Body,
   Param,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { AppService } from './app.service';
 
 const appStartTime = Date.now();
+const SIMULATE_FAILURES = process.env.SIMULATE_PROBE_FAILURES !== 'false';
 
 @Controller()
 export class AppController {
@@ -41,29 +44,40 @@ export class AppController {
   }
 
   @Get('health')
-  async getHealth() {
+  getHealth() {
     const uptime = Date.now() - appStartTime;
-    // Симулируем "тяжелый" старт: первые 45 секунд приложение отвечает очень долго (10 секунд)
-    if (uptime < 45000) {
-      await new Promise((resolve) => setTimeout(resolve, 10000));
+
+    // Мягкий старт: первые 15 секунд сервис сообщает о прогреве (HTTP 503)
+    if (SIMULATE_FAILURES && uptime < 15000) {
+      throw new HttpException(
+        { status: 'warming_up', uptimeMs: uptime },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
     }
-    return { status: 'ok' };
+
+    return { status: 'ok', uptimeMs: uptime };
   }
 
   @Get('ready')
-  async getReady() {
+  getReady() {
     const uptime = Date.now() - appStartTime;
 
-    // 1. Аналогично для ready пробы при старте
-    if (uptime < 45000) {
-      await new Promise((resolve) => setTimeout(resolve, 10000));
-    }
-    // 2. Симулируем временную "потерю готовности" с 60 по 100 секунду (40 секунд)
-    // В это время k8s пометит под как NotReady и перестанет слать на него трафик
-    else if (uptime >= 60000 && uptime < 100000) {
-      await new Promise((resolve) => setTimeout(resolve, 10000));
+    // 1. Не готов во время стартового прогрева (первые 15 секунд)
+    if (SIMULATE_FAILURES && uptime < 15000) {
+      throw new HttpException(
+        { status: 'starting', uptimeMs: uptime },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
     }
 
-    return { status: 'ready' };
+    // 2. Короткая симуляция временной потери готовности с 30-й по 45-ю секунду (15 секунд)
+    if (SIMULATE_FAILURES && uptime >= 30000 && uptime < 45000) {
+      throw new HttpException(
+        { status: 'temporarily_unavailable', uptimeMs: uptime },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    return { status: 'ready', uptimeMs: uptime };
   }
 }

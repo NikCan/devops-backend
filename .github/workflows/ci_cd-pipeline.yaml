@@ -11,12 +11,11 @@ jobs:
 
   checks:
     name: Code Checks
-    needs: [security]
     uses: ./.github/workflows/checks.yml
 
   build:
     name: Build Image
-    needs: [checks]
+    needs: [checks, security]
     uses: ./.github/workflows/build.yml
     with:
       image_name: "devops-backend"

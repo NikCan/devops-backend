@@ -19,7 +19,9 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       image_name: "devops-backend"
-    secrets: inherit
+    secrets:
+      DOCKER_USER: ${{ secrets.DOCKER_USER }}
+      DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
 
   deploy:
     name: Deploy to Production
@@ -45,4 +47,7 @@ jobs:
       checks_result: ${{ needs.checks.result }}
       build_result: ${{ needs.build.result }}
       deploy_result: ${{ needs.deploy.result }}
-    secrets: inherit
+    secrets:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+

@@ -5,8 +5,13 @@ on:
     branches: [develop]
 
 jobs:
+  security:
+    name: SAST & SCA Scan
+    uses: ./.github/workflows/sast-sca.yml
+
   checks:
     name: Code Checks
+    needs: [security]
     uses: ./.github/workflows/checks.yml
 
   build:

@@ -52,7 +52,7 @@ jobs:
             --exclude=build \
             --exclude=k8s \
             --exclude=helm \
-            --exclude=workflows \
+            --exclude=. github \
             .
   trivy:
     runs-on: ubuntu-latest

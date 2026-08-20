@@ -1,12 +1,12 @@
 title = "gitleaks config"
- 
+
 [extend]
 useDefault = true
 
 [allowlist]
-description = "Ignore NestJS README template badge"
+description = "Global allowlist for false positives and config files"
 paths = [
-  '''.gitleaks\.toml''',
+  '''\.gitleaks\.toml''',
   '''README\.md'''
 ]
 regexes = [
